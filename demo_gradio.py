@@ -68,8 +68,10 @@ def run_model(target_dir, model) -> dict:
 
     # Run inference
     print("Running inference...")
+    dtype = torch.bfloat16 if torch.cuda.get_device_capability()[0] >= 8 else torch.float16
+
     with torch.no_grad():
-        with torch.cuda.amp.autocast(dtype=torch.bfloat16):
+        with torch.cuda.amp.autocast(dtype=dtype):
             predictions = model(images)
 
     # Convert pose encoding to extrinsic and intrinsic matrices
@@ -244,7 +246,7 @@ def gradio_demo(
     torch.cuda.empty_cache()
 
     end_time = time.time()
-    print(f"Total time: {end_time - start_time:.2f} seconds")
+    print(f"Total time: {end_time - start_time:.2f} seconds (including IO)")
     log_msg = f"Reconstruction Success ({len(all_files)} frames). Waiting for visualization."
 
     return glbfile, log_msg, gr.Dropdown(choices=frame_filter_choices, value=frame_filter, interactive=True)

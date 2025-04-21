@@ -142,3 +142,7 @@ dmypy.json
 **/tmp/
 **/outputs/skyseg.onnx
 skyseg.onnx
+
+# pixi environments
+.pixi
+*.egg-info

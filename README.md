@@ -23,6 +23,10 @@
   year={2025}
 }
 ```
+
+## Updates
+- [Apr 13, 2025] Training code is being gradually cleaned and uploaded to the [training](https://github.com/facebookresearch/vggt/tree/training) branch. It will be merged into the main branch once finalized.
+
 ## Overview
 
 Visual Geometry Grounded Transformer (VGGT, CVPR 2025) is a feed-forward neural network that directly infers all key 3D attributes of a scene, including extrinsic and intrinsic camera parameters, point maps, depth maps, and 3D point tracks, **from one, a few, or hundreds of its views, within seconds**.
@@ -37,6 +41,8 @@ git clone git@github.com:facebookresearch/vggt.git
 cd vggt
 pip install -r requirements.txt
 ```
+
+Alternatively, you can install VGGT as a package (<a href="docs/package.md">click here</a> for details).
 
 
 Now, try the model with just a few lines of code:
@@ -58,9 +64,10 @@ model = VGGT.from_pretrained("facebook/VGGT-1B").to(device)
 image_names = ["path/to/imageA.png", "path/to/imageB.png", "path/to/imageC.png"]  
 images = load_and_preprocess_images(image_names).to(device)
 
-with torch.no_grad() and torch.cuda.amp.autocast(dtype=dtype):
-    # Predict attributes including cameras, depth maps, and point maps.
-    predictions = model(images)
+with torch.no_grad():
+    with torch.cuda.amp.autocast(dtype=dtype):
+        # Predict attributes including cameras, depth maps, and point maps.
+        predictions = model(images)
 ```
 
 The model weights will be automatically downloaded from Hugging Face. If you encounter issues such as slow loading, you can manually download them [here](https://huggingface.co/facebook/VGGT-1B/blob/main/model.pt) and load, or:
@@ -108,7 +115,8 @@ with torch.no_grad():
     track_list, vis_score, conf_score = model.track_head(aggregated_tokens_list, images, ps_idx, query_points=query_points[None])
 ```
 
-Furthermore, if certain pixels in the input frames are unwanted (e.g., sea, glass), you can mask them by setting the corresponding pixel values to 0 or 1, and then pass the masked images to the model.
+
+Furthermore, if certain pixels in the input frames are unwanted (e.g., reflective surfaces, sky, or water), you can simply mask them by setting the corresponding pixel values to 0 or 1. Precise segmentation masks aren't necessary - simple bounding box masks work effectively (check this [issue](https://github.com/facebookresearch/vggt/issues/47) for an example).
 
 
 ## Visualization
@@ -164,6 +172,10 @@ This plots the tracks on the images and saves them to the specified output direc
 ## Single-view Reconstruction
 
 Our model shows surprisingly good performance on single-view reconstruction, although it was never trained for this task. The model does not need to duplicate the single-view image to a pair, instead, it can directly infer the 3D structure from the tokens of the single view image. Feel free to try it with our demos above, which naturally works for single-view reconstruction.
+
+
+We did not quantitatively test monocular depth estimation performance ourselves, but [@kabouzeid](https://github.com/kabouzeid) generously provided a comparison of VGGT to recent methods [here](https://github.com/facebookresearch/vggt/issues/36). VGGT shows competitive or better results compared to state-of-the-art monocular approaches such as DepthAnything v2 or MoGe, despite never being explicitly trained for single-view tasks. 
+
 
 
 ## Runtime and GPU Memory
